@@ -14,11 +14,6 @@ date: 2024-12-13
 {: class="table-of-content"}
 * TOC
 {:toc}
-- **Section II**: Background and Related Work
-- **Section III**: Overview of the DesnowNet architecture.
-- **Section IV**: Details of the dataset and scaling adaptations.
-- **Section V**: Experimental results and observations.
-- **Section VI**: Conclusions and reflections on the project.
 
 ## 1. Introduction
 
@@ -81,6 +76,10 @@ Where:
 $$x$$ is the snowy color image, a combination of the snow-free image $$y$$ 
 and a snow mask $$z$$. $$\odot$$ denotes element-wise multiplication, 
 and $$a$$ represents the chromatic aberration map.
+
+![original]({{ '/assets/images/team41/desnownet.png' | relative_url }})
+{: style="width: 400px; max-width: 100%;"}
+*Fig 2. Overview of DesnowNet* [1].
 
 
 To estimate the snow-free image $$\hat{y}$$ from a given $$x$$, we must also estimate the snow mask $$\hat{z}$$ and the aberration map $$a$$. The original paper used a neural network with two modules:
@@ -317,10 +316,10 @@ Despite downscaling the network and dataset, the performance was acceptable. Tho
 
 ![original]({{ '/assets/images/team41/original.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
-*Fig 2. Original image with lots of synthetic snow* [2].
+*Fig 3. Original image with lots of synthetic snow* [2].
 ![removed]({{ '/assets/images/team41/removed.png' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
-*Fig 3. Corresponding output image of our DesnowNet model* [3].
+*Fig 4. Corresponding output image of our DesnowNet model* [3].
 
 
 ## Reference
