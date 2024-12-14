@@ -33,7 +33,7 @@ Image restoration is a fundamental task in computer vision that aims to recover 
 
 In traditional machine learning pipelines, image restoration tasks are handled by minimizing a loss function that quantifies the difference between the restored image and the ground truth. Modern methods leverage deep learning models to capture complex patterns of degradation and restoration, achieving state-of-the-art results across various tasks.
 
-![original]({{ '/assets/images/team41/restored.png' | relative_url }})
+![original]({{ '/assets/images/team41/restored.jpg' | relative_url }})
 {: style="width: 400px; max-width: 100%;"}
 *Fig 1. Example of a restored image* [1].
 
@@ -72,32 +72,39 @@ By combining these advancements with task-specific knowledge, modern image resto
 ## 2. Proposed Method
 The general mathematical equation is as follows:
 
-\[ x = a \odot z + y \odot (1 - z) \tag{1} \]
+$$
+x = a \odot z + y \odot (1 - z) \tag{1}
+$$
 
 Where:
-- \( x \) is the snowy color image, a combination of the snow-free image \( y \) and a snow mask \( z \),
-- \( \odot \) denotes element-wise multiplication, and
-- \( a \) represents the chromatic aberration map.
 
-To estimate the snow-free image \( \hat{y} \) from a given \( x \), we must also estimate the snow mask \( \hat{z} \) and the aberration map \( a \). The original paper used a neural network with two modules:
+$$x$$ is the snowy color image, a combination of the snow-free image $$y$$ 
+and a snow mask $$z$$. $$\odot$$ denotes element-wise multiplication, 
+and $$a$$ represents the chromatic aberration map.
+
+
+To estimate the snow-free image $$\hat{y}$$ from a given $$x$$, we must also estimate the snow mask $$\hat{z}$$ and the aberration map $$a$$. The original paper used a neural network with two modules:
 - Translucency Recovery (TR)
 - Residual Generation (RG)
 
 The translucency recovery module focuses on representing the snow in the image as a mask and using this mask to remove the translucent snow artifacts to create an approximation of the snow-free image. The residual generation module is used to restore finer textures and details that were removed by the translucency recovery step.
 
-The relationship between \( \hat{y} \) for residual generation is described as:
+The relationship between $$\hat{y}$$ for residual generation is described as:
 
-\[ \hat{y} = y' + r \tag{2} \]
+$$\hat{y} = y' + r \tag{2}$$
+
+
 
 
 ### 2.1 Descriptor
 Both TR and RG consist of Descriptor Extraction and Recovery submodules. This section will focus on the descriptor module. Descriptors are compact representations of features from an image and are extracted using an Inception-V4 network as a backbone and a subnetwork termed as the dilation pyramid (DP), defined as:
 
-\[ f_t = \gamma \|_{n=0}^{n} B_{2n} (\Phi(x)) \tag{3} \]
+$$f_t = \gamma \|_{n=0}^{n} B_{2n} (\Phi(x)) \tag{3}$$
 
 Where:
-- \( \Phi(x) \) represents the features from the last convolution layer of Inception-V4,
-- \( B_{2n} \) denotes the dilated convolution with dilation factor \( 2n \).
+- $$\Phi(x)$$ represents the features from the last convolution layer of Inception-V4,
+- $$B_{2n}$$ denotes the dilated convolution with dilation factor $$2n$$.
+
 
 The Inception architecture is particularly suited for capturing multi-scale features due to its ability to process information across varying filter sizes within the same layer. The dilation pyramid applies dilated convolutions with varying dilation rates, enabling the network to capture spatial dependencies at multiple scales without increasing the number of parameters.
 
@@ -157,24 +164,32 @@ class DilationPyramid(nn.Module):
 
 ### 2.2 Recovery Submodule
 The recovery submodule of the TR module generates the estimated snow-free image by recovering the details behind translucent snow particles. It consists of:
-1. Snow mask estimation (SE): Generates a snow mask, which indicates the regions of the image affected by snow. The snow mask acts as a map where each pixel represents the amount of snow occlusion, with values closer to 1 reprenting areas with a lot of snow and values closer to 0 representing snow-free regions. \( \hat{z} \).
-2. Aberration estimation (AE): Generates the chromatic aberration map for each RGB channel. Chromatic aberration occurs when snow particles distort the color and brightness of the image by scattering light.c
+1. Snow mask estimation (SE): Generates a snow mask, which indicates the regions of the image affected by snow. The snow mask acts as a map where each pixel represents the amount of snow occlusion, with values closer to 1 representing areas with a lot of snow and values closer to 0 representing snow-free regions $$\hat{z}$$.
 
-A new architecture, termed Pyramid Maxout, is used to select robust feature maps. The Pyramid Maxout architecture is effective in handling complex snow patterns because it combines features from multiple receptive fields.:
+2. Aberration estimation (AE): Generates the chromatic aberration map for each RGB channel. Chromatic aberration occurs when snow particles distort the color and brightness of the image by scattering light.
 
-\[ M_{\beta}(f_t) = \text{max}( \text{conv}_1(f_t), \text{conv}_3(f_t), \dots, \text{conv}_{2\beta-1}(f_t) ) \tag{4} \]
+A new architecture, termed Pyramid Maxout, is used to select robust feature maps. The Pyramid Maxout architecture is effective in handling complex snow patterns because it combines features from multiple receptive fields:
+
+$$
+M_{\beta}(f_t) = \text{max}( \text{conv}_1(f_t), \text{conv}_3(f_t), \dots, \text{conv}_{2\beta-1}(f_t) ) \tag{4}
+$$
 
 The TR module recovers the content behind snow:
 
-\[ y'_i = 
+$$
+y'_i = 
 \begin{cases} 
 \frac{x_i - a_i \times \hat{z}_i}{1 - \hat{z}_i}, & \text{if } \hat{z}_i < 1 \\
 x_i, & \text{if } \hat{z}_i = 1 
-\end{cases} \tag{5} \]
+\end{cases} \tag{5}
+$$
 
-The RG module complements the residual \( r \) for improved image reconstruction:
+The RG module complements the residual $$r$$ for improved image reconstruction:
 
-\[ r = R_r(D_r(f_c)) = \sum_{\beta} \text{conv}_{2n-1}(f_r) \tag{6} \]
+$$
+r = R_r(D_r(f_c)) = \sum_{\beta} \text{conv}_{2n-1}(f_r) \tag{6}
+$$
+
 
 Here are the definitions of the aforementioned modules:
 ```
@@ -216,17 +231,22 @@ class RecoveryR(nn.Module):
 ### 2.3 Loss Function
 A loss network is constructed to measure losses at certain layers:
 
-\[ L(m, \hat{m}) = \sum_{\tau=0}^{\tau} \| P_{2i}(m) - P_{2i}(\hat{m}) \|_2^2 \tag{7} \]
+$$
+L(m, \hat{m}) = \sum_{\tau=0}^{\tau} \| P_{2i}(m) - P_{2i}(\hat{m}) \|_2^2 \tag{7}
+$$
 
 The overall loss function is defined as:
 
-\[ L_{\text{overall}} = L_{y'} + L_{\hat{y}} + \lambda_{\hat{z}} L_{\hat{z}} + \lambda_w \| w \|_2^2 \tag{8} \]
+$$
+L_{\text{overall}} = L_{y'} + L_{\hat{y}} + \lambda_{\hat{z}} L_{\hat{z}} + \lambda_w \| w \|_2^2 \tag{8}
+$$
 
 Where:
 
-- \( L_{\hat{z}} = L(z, \hat{z}) \),
-- \( L_{\hat{y}} = L(y, \hat{y}) \),
-- \( L_{y'} = L(y, y') \).
+- $$L_{\hat{z}} = L(z, \hat{z})$$,
+- $$L_{\hat{y}} = L(y, \hat{y})$$,
+- $$L_{y'} = L(y, y')$$.
+
 
 
 Here is our final network architecture and implementation of our loss function:
